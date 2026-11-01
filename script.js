@@ -1,5 +1,6 @@
-// GitHub Pages e frontend, backend alada host hobe (Render/Railway/VPS). Backend URL ekhane dao:
-const API_BASE = "https://YOUR-BACKEND-URL.onrender.com";
+const API_BASE = "https://mediavault-api.onrender.com";. 
+
+
 
 const $ = (id) => document.getElementById(id);
 const urlInput = $("url"), statusEl = $("status"), goBtn = $("go");
