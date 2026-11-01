@@ -1,5 +1,5 @@
 
-const API_URL = "YOUR_RENDER_URL";
+const API_URL = "https://media-vault-api.onrender.com";
 
 // Test Backend Connection
 async function checkBackend() {
