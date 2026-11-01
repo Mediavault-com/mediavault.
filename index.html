@@ -1,752 +1,236 @@
 
+import React, { useState } from "react";
+import {
+  Download, Link2, Video, Image, Copy,
+  Headphones, ShieldCheck, FileText, Menu,
+  Instagram, Facebook, CheckCircle, AlertCircle
+} from "lucide-react";
+import "./App.css";
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MediaVault - Video Downloader</title>
-<meta name="description" content="A simple media link manager for videos, reels, photos and captions.">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#f5f6fc;color:#20243a}
-header{background:#11152b;color:white;padding:18px 7%;display:flex;justify-content:space-between;align-items:center}
-.logo{font-size:23px;font-weight:bold}
-.logo span{color:#8d79ff}
-nav{display:flex;gap:18px;flex-wrap:wrap}
-nav a{color:white;text-decoration:none;font-size:13px}
-.hero{background:linear-gradient(135deg,#171b38,#5140a7);color:white;text-align:center;padding:65px 18px}
-.hero h1{font-size:38px;margin-bottom:12px}
-.hero p{color:#d5d3f4;line-height:1.6}
-.container{max-width:850px;margin:30px auto;padding:0 16px}
-.panel{background:white;border-radius:18px;padding:25px;box-shadow:0 8px 30px #20243a12;margin-bottom:20px}
-.platforms{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
-.platform{border:1px solid #e3e4ee;border-radius:12px;padding:16px 5px;cursor:pointer;background:white;font-weight:bold;color:#343750}
-.platform.active{border:2px solid #7057ed;background:#f1efff;color:#5943d5}
-input,textarea,select{width:100%;padding:15px;border:1px solid #ddd;border-radius:10px;font-size:15px;margin:10px 0}
-textarea{resize:vertical}
-button{border:0;border-radius:10px;background:#7057ed;color:white;padding:14px 20px;font-size:15px;font-weight:bold;cursor:pointer}
-button:hover{background:#5740d0}
-.full{width:100%}
-.secondary{background:#eceaff;color:#5943d5}
-.result{background:#f4f2ff;border-radius:12px;padding:17px;margin-top:15px;display:none;line-height:1.6}
-.features{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
-.feature{padding:20px;background:#f7f6ff;border-radius:12px}
-.feature h3{margin-bottom:8px}
-.feature p{font-size:13px;color:#696d7d;line-height:1.5}
-footer{background:#11152b;color:white;padding:30px 7%;text-align:center}
-footer a{color:#c6baff;text-decoration:none;margin:8px;display:inline-block;font-size:13px}
-.page{display:none;line-height:1.8}
-.page h2{margin-bottom:15px}
-.page h3{margin:16px 0 5px}
-.notice{font-size:12px;color:#777;margin-top:12px}
-@media(max-width:600px){
- header{flex-direction:column;gap:15px}
- nav{justify-content:center}
- .hero h1{font-size:29px}
- .platforms{grid-template-columns:repeat(2,1fr)}
- .features{grid-template-columns:1fr}
-}
-</style>
-</head>
-<body>
+export default function App() {
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState("home");
 
-<header>
- <div class="logo">Media<span>Vault</span></div>
- <nav>
-  <a href="#" onclick="showPage('home')">Home</a>
-  <a href="#" onclick="showPage('help')">Help</a>
-  <a href="#" onclick="showPage('dmca')">DMCA</a>
-  <a href="#" onclick="showPage('privacy')">Privacy</a>
- </nav>
-</header>
-
-<section id="home">
- <div class="hero">
-  <h1>Download. Save. Enjoy.</h1>
-  <p>Your media link and caption toolkit.<br>Simple, fast and mobile friendly.</p>
- </div>
-
- <main class="container">
-  <div class="panel">
-   <h2>Select Platform</h2>
-   <div class="platforms">
-    <button class="platform active" data-platform="Facebook">Facebook</button>
-    <button class="platform" data-platform="TikTok">TikTok</button>
-    <button class="platform" data-platform="Instagram">Instagram</button>
-    <button class="platform" data-platform="Twitter/X">Twitter / X</button>
-    <button class="platform" data-platform="Photos">Photos</button>
-    <button class="platform" data-platform="Stories">Stories</button>
-   </div>
-
-   <h3>Paste your media URL</h3>
-   <input id="mediaUrl" type="url" placeholder="https://example.com/video" autocomplete="url">
-   <button class="full" onclick="analyze()">Analyze Media Link</button>
-
-   <div class="result" id="result" role="status"></div>
-   <p class="notice">Only use media you own or have permission to download. Private content and protected media are not supported.</p>
-  </div>
-
-  <div class="panel">
-   <h2>Caption Copy Tool</h2>
-   <textarea id="caption" rows="4" placeholder="Paste your caption here..."></textarea>
-   <button class="full secondary" onclick="copyCaption()">Copy Caption</button>
-   <p id="copyStatus" class="notice" aria-live="polite"></p>
-  </div>
-
-  <div class="panel">
-   <h2>Our Features</h2>
-   <div class="features">
-    <div class="feature"><h3>🎬 Video & Reels</h3><p>Organize supported video and reels links.</p></div>
-    <div class="feature"><h3>📷 Photos</h3><p>Work with authorized photo media.</p></div>
-    <div class="feature"><h3>📱 Stories</h3><p>Support for permitted story media sources.</p></div>
-    <div class="feature"><h3>⚡ Fast Experience</h3><p>Simple, responsive and lightweight interface.</p></div>
-    <div class="feature"><h3>📝 Caption Copy</h3><p>Copy captions with one click.</p></div>
-    <div class="feature"><h3>🛡️ Privacy</h3><p>No account password collection.</p></div>
-   </div>
-  </div>
- </main>
-</section>
-
-<main class="container">
- <section class="panel page" id="terms">
-  <h2>Terms & Conditions</h2>
-  <p>By using MediaVault, you agree to these terms.</p>
-  <h3>Permitted use</h3>
-  <p>Only download content you own, have permission to use, or are legally entitled to access.</p>
-  <h3>Restrictions</h3>
-  <p>Do not use this service to violate copyright, privacy, platform rules or applicable laws. Circumventing access controls is prohibited.</p>
-  <h3>Service availability</h3>
-  <p>We aim to provide a reliable service but cannot guarantee uninterrupted availability or error-free operation.</p>
- </section>
-
- <section class="panel page" id="privacy">
-  <h2>Privacy Policy</h2>
-  <p>MediaVault is designed to minimize personal information collection.</p>
-  <h3>Information</h3>
-  <p>This frontend does not require an account or collect social media passwords. URLs entered are processed locally by this demo.</p>
-  <h3>Third-party services</h3>
-  <p>Future API integrations may process links according to their own privacy policies. This policy must be updated before enabling those services.</p>
-  <h3>Contact</h3>
-  <p>For privacy questions, contact the site operator using the support address.</p>
- </section>
-
- <section class="panel page" id="dmca">
-  <h2>DMCA / Copyright Support</h2>
-  <p>Copyright owners can submit a takedown request.</p>
-  <h3>Include in your request:</h3>
-  <p>1. Identification of the copyrighted work.</p>
-  <p>2. The URL of the allegedly infringing material.</p>
-  <p>3. Your contact information.</p>
-  <p>4. A good-faith statement and declaration of authority.</p>
-  <p>5. Your electronic or physical signature.</p>
-  <p>Send your notice to the operator's designated copyright contact. Replace the placeholder email with a monitored address before launch.</p>
- </section>
-
- <section class="panel page" id="help">
-  <h2>Help & Support</h2>
-  <p>Need assistance? Submit your question to our support team.</p>
-  <input id="supportEmail" type="email" placeholder="Your email address">
-  <textarea id="supportMessage" rows="5" placeholder="Describe your issue..."></textarea>
-  <button class="full" onclick="sendSupport()">Send Support Request</button>
-  <p class="notice" id="supportStatus" aria-live="polite">24/7 support availability requires a staffed support service.</p>
- </section>
-</main>
-
-<footer>
- <h3>MediaVault</h3>
- <p style="margin:10px">Your media toolkit.</p>
- <a href="#" onclick="showPage('terms')">Terms</a>
- <a href="#" onclick="showPage('privacy')">Privacy Policy</a>
- <a href="#" onclick="showPage('dmca')">DMCA</a>
- <a href="#" onclick="showPage('help')">Help & Support</a>
- <p style="margin-top:20px;font-size:12px;color:#aaa">© 2026 MediaVault. All rights reserved.</p>
-</footer>
-
-<script>
-let selectedPlatform = "Facebook";
-
-document.querySelectorAll(".platform").forEach(button => {
- button.addEventListener("click", () => {
-  document.querySelectorAll(".platform").forEach(b => b.classList.remove("active"));
-  button.classList.add("active");
-  selectedPlatform = button.dataset.platform;
- });
-});
-
-function analyze() {
- const urlInput = document.getElementById("mediaUrl");
- const result = document.getElementById("result");
- const value = urlInput.value.trim();
-
- result.style.display = "block";
-
- try {
-  const parsed = new URL(value);
-  if (!["http:", "https:"].includes(parsed.protocol)) throw Error();
-  result.innerHTML = `
-   <strong>Link accepted for validation</strong><br>
-   Platform: ${escapeHTML(selectedPlatform)}<br>
-   Host: ${escapeHTML(parsed.hostname)}<br><br>
-   <strong>Download integration required.</strong><br>
-   Connect an authorized media API or your own backend to retrieve downloadable media.
-  `;
- } catch {
-  result.textContent = "Please enter a valid HTTP or HTTPS URL.";
- }
-}
-
-function escapeHTML(text) {
- return text.replace(/[&<>"']/g, c => ({
-  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
- }[c]));
-}
-
-async function copyCaption() {
- const caption = document.getElementById("caption").value;
- const status = document.getElementById("copyStatus");
-
- if (!caption.trim()) {
-  status.textContent = "Please enter a caption first.";
-  return;
- }
-
- try {
-  await navigator.clipboard.writeText(caption);
-  status.textContent = "Caption copied successfully!";
- } catch {
-  status.textContent = "Clipboard unavailable. Please copy manually.";
- }
-}
-
-function showPage(page) {
- document.getElementById("home").style.display = page === "home" ? "block" : "none";
- document.querySelectorAll(".page").forEach(p => p.style.display = "none");
-
- if(page !== "home") {
-  document.getElementById(page).style.display = "block";
- }
- window.scrollTo({top:0,behavior:"smooth"});
-}
-
-function sendSupport() {
- const email = document.getElementById("supportEmail").value.trim();
- const message = document.getElementById("supportMessage").value.trim();
- const status = document.getElementById("supportStatus");
-
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !message) {
-  status.textContent = "Enter a valid email and support message.";
-  return;
- }
-
- status.textContent = "Support backend not connected yet. Configure a secure support service before accepting requests.";
-}
-</script>
-</body>
-</html>
-mediavault-backend/
-│
-├── server.js
-├── package.json
-├── .env
-├── .env.example
-├── .gitignore
-│
-├── uploads/
-│
-└── public/
-    └── (not required)  
-
-{
-  "name": "mediavault-backend",
-  "version": "2.0.0",
-  "private": true,
-  "description": "MediaVault authorized media API backend",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
-  },
-  "engines": {
-    "node": ">=22"
-  },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "express-rate-limit": "^7.5.0",
-    "helmet": "^8.0.0",
-    "multer": "^2.0.0"
-  }
-}
-npm install
-
-PORT=3000
-NODE_ENV=development
-
-FRONTEND_URL=http://localhost:5500
-
-# Generate a long random secret before deployment
-ADMIN_UPLOAD_TOKEN=replace_with_a_long_random_secret
-
-MAX_UPLOAD_MB=100
-
-# OAuth credentials: keep these on the backend only
-FACEBOOK_CLIENT_ID=
-FACEBOOK_CLIENT_SECRET=
-
-INSTAGRAM_CLIENT_ID=
-INSTAGRAM_CLIENT_SECRET=
-
-TIKTOK_CLIENT_KEY=
-TIKTOK_CLIENT_SECRET=
-
-X_CLIENT_ID=
-X_CLIENT_SECRET=
-
-# OAuth callback base URL
-BACKEND_URL=http://localhost:3000
-
-node_modules/
-.env
-uploads/
-support-data/
-.DS_Store
-
-require("dotenv").config();
-
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
-const multer = require("multer");
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-const UPLOAD_DIR = path.join(__dirname, "uploads");
-const DATA_DIR = path.join(__dirname, "support-data");
-
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-fs.mkdirSync(DATA_DIR, { recursive: true });
-
-app.disable("x-powered-by");
-app.use(helmet());
-app.use(express.json({ limit: "20kb" }));
-
-const allowedOrigins = (process.env.FRONTEND_URL || "")
-  .split(",")
-  .map(x => x.trim())
-  .filter(Boolean);
-
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error("Origin not allowed"));
-  }
-}));
-
-app.use("/api", rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
-  standardHeaders: "draft-7",
-  legacyHeaders: false
-}));
-
-// Platform host validation only.
-// This does not extract or download platform content.
-const platforms = {
-  facebook: ["facebook.com", "fb.watch"],
-  instagram: ["instagram.com"],
-  tiktok: ["tiktok.com"],
-  twitter: ["x.com", "twitter.com"]
-};
-
-function getPlatform(hostname) {
-  const host = hostname.toLowerCase().replace(/^www\./, "");
-
-  for (const [platform, domains] of Object.entries(platforms)) {
-    if (domains.some(domain =>
-      host === domain || host.endsWith("." + domain)
-    )) {
-      return platform;
-    }
+  function detectPlatform(value) {
+    if (/tiktok\.com/i.test(value)) return "TikTok";
+    if (/facebook\.com|fb\.watch/i.test(value)) return "Facebook";
+    if (/instagram\.com/i.test(value)) return "Instagram";
+    if (/x\.com|twitter\.com/i.test(value)) return "Twitter / X";
+    return "Social Media";
   }
 
-  return null;
-}
+  async function handleDownload() {
+    setError("");
+    setResult(null);
 
-function saveLog(filename, data) {
-  const file = path.join(DATA_DIR, filename);
-  fs.appendFileSync(file, JSON.stringify(data) + "\n");
-}
-
-function requireAdmin(req, res, next) {
-  const expected = process.env.ADMIN_UPLOAD_TOKEN;
-  const received = req.headers["x-upload-token"];
-
-  if (!expected || expected.length < 32) {
-    return res.status(503).json({
-      error: "Upload authentication is not configured"
-    });
-  }
-
-  const a = Buffer.from(String(received || ""));
-  const b = Buffer.from(expected);
-
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  next();
-}
-
-// Health check
-app.get("/health", (req, res) => {
-  res.json({
-    status: "online",
-    app: "MediaVault",
-    version: "2.0.0"
-  });
-});
-
-// Platform link validation
-app.post("/api/analyze", (req, res) => {
-  const { url } = req.body || {};
-
-  if (typeof url !== "string" || url.length > 2048) {
-    return res.status(400).json({
-      error: "Please provide a valid URL"
-    });
-  }
-
-  let parsed;
-
-  try {
-    parsed = new URL(url);
-  } catch {
-    return res.status(400).json({
-      error: "Invalid URL"
-    });
-  }
-
-  if (!["https:", "http:"].includes(parsed.protocol) ||
-      parsed.username || parsed.password) {
-    return res.status(400).json({
-      error: "Unsupported URL"
-    });
-  }
-
-  const platform = getPlatform(parsed.hostname);
-
-  if (!platform) {
-    return res.status(400).json({
-      error: "This platform is not supported"
-    });
-  }
-
-  res.json({
-    success: true,
-    platform,
-    host: parsed.hostname,
-    message: "Platform recognized. Authorized API integration is required to retrieve media.",
-    downloadReady: false
-  });
-});
-
-// Secure media upload configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, crypto.randomUUID() + ext);
-  }
-});
-
-const allowedMimeTypes = new Set([
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif"
-]);
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: Number(process.env.MAX_UPLOAD_MB || 100) * 1024 * 1024,
-    files: 1
-  },
-  fileFilter: (req, file, cb) => {
-    if (!allowedMimeTypes.has(file.mimetype)) {
-      return cb(new Error("Unsupported media type"));
-    }
-    cb(null, true);
-  }
-});
-
-// Admin-only upload of owned or authorized media
-app.post("/api/assets", requireAdmin, (req, res) => {
-  upload.single("media")(req, res, err => {
-    if (err) {
-      return res.status(400).json({
-        error: err.message || "Upload failed"
-      });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({
-        error: "Select a media file"
-      });
-    }
-
-    const asset = {
-      id: path.basename(req.file.filename, path.extname(req.file.filename)),
-      filename: req.file.filename,
-      originalName: path.basename(req.file.originalname),
-      mimeType: req.file.mimetype,
-      size: req.file.size,
-      createdAt: new Date().toISOString()
-    };
-
-    saveLog("assets.jsonl", asset);
-
-    res.status(201).json({
-      success: true,
-      asset,
-      downloadUrl: `/api/assets/${asset.id}/download`
-    });
-  });
-});
-
-// Find an uploaded asset in the local catalog
-function findAsset(id) {
-  const file = path.join(DATA_DIR, "assets.jsonl");
-
-  if (!fs.existsSync(file)) return null;
-
-  const rows = fs.readFileSync(file, "utf8")
-    .split("\n")
-    .filter(Boolean);
-
-  for (let i = rows.length - 1; i >= 0; i--) {
     try {
-      const asset = JSON.parse(rows[i]);
+      const parsed = new URL(url.trim());
 
-      if (asset.id === id) {
-        return asset;
+      if (!["http:", "https:"].includes(parsed.protocol)) {
+        throw new Error("Invalid URL");
       }
-    } catch {}
+
+      setLoading(true);
+
+      // Your backend should verify the URL and authorization.
+      // It must not bypass private content, DRM or platform restrictions.
+      const response = await fetch("/api/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: parsed.href,
+          platform: detectPlatform(parsed.href)
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to process this link.");
+      }
+
+      setResult(data);
+    } catch (err) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  return null;
-}
-
-// Download only media uploaded into our own storage
-app.get("/api/assets/:id/download", (req, res) => {
-  if (!/^[a-f0-9-]{36}$/i.test(req.params.id)) {
-    return res.status(400).json({ error: "Invalid asset ID" });
+  async function copyCaption() {
+    if (!result?.caption) return;
+    await navigator.clipboard.writeText(result.caption);
+    alert("Caption copied!");
   }
 
-  const asset = findAsset(req.params.id);
-
-  if (!asset) {
-    return res.status(404).json({ error: "Media not found" });
-  }
-
-  const filePath = path.resolve(UPLOAD_DIR, asset.filename);
-
-  if (path.dirname(filePath) !== path.resolve(UPLOAD_DIR) ||
-      !fs.existsSync(filePath)) {
-    return res.status(404).json({ error: "Media file not found" });
-  }
-
-  res.download(filePath, asset.originalName);
-});
-
-// Support request
-app.post("/api/support", (req, res) => {
-  const { email, message } = req.body || {};
-
-  if (
-    typeof email !== "string" ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-    typeof message !== "string" ||
-    message.trim().length < 5 ||
-    message.length > 5000
-  ) {
-    return res.status(400).json({
-      error: "Valid email and message are required"
-    });
-  }
-
-  const ticket = {
-    id: crypto.randomUUID(),
-    email,
-    message: message.trim(),
-    createdAt: new Date().toISOString(),
-    status: "received"
+  const pages = {
+    home: "Home",
+    terms: "Terms & Conditions",
+    privacy: "Privacy Policy",
+    copyright: "DMCA & Copyright",
+    support: "Help & Support"
   };
 
-  saveLog("support.jsonl", ticket);
+  return (
+    <div className="app">
+      <header className="navbar">
+        <div className="brand">
+          <div className="logo"><Download /></div>
+          <span>Reel<span className="accent">Save</span></span>
+        </div>
 
-  res.status(201).json({
-    success: true,
-    ticketId: ticket.id,
-    message: "Support request received"
-  });
-});
+        <button className="menu" onClick={() => setPage("support")}>
+          <Menu />
+        </button>
 
-// DMCA request
-app.post("/api/dmca", (req, res) => {
-  const { name, email, contentUrl, description, declaration } =
-    req.body || {};
+        <nav>
+          {Object.entries(pages).map(([key, name]) => (
+            <button key={key} onClick={() => setPage(key)}>
+              {name}
+            </button>
+          ))}
+        </nav>
+      </header>
 
-  if (
-    typeof name !== "string" || !name.trim() ||
-    typeof email !== "string" ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-    typeof contentUrl !== "string" ||
-    typeof description !== "string" ||
-    !description.trim() ||
-    declaration !== true
-  ) {
-    return res.status(400).json({
-      error: "Complete all required DMCA fields and declaration"
-    });
-  }
+      {page === "home" ? (
+        <main>
+          <section className="hero">
+            <div className="tag">✦ FAST • SIMPLE • SMOOTH</div>
+            <h1>Download Your<br />
+              <span className="gradient">Favorite Media</span>
+            </h1>
+            <p>
+              Save videos and photos you own or are authorized
+              to download. Copy captions with one click.
+            </p>
 
-  let parsed;
+            <div className="download-box">
+              <div className="input-row">
+                <Link2 />
+                <input
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  placeholder="Paste your video or photo URL here..."
+                />
+              </div>
+              <button
+                className="download-btn"
+                onClick={handleDownload}
+                disabled={!url.trim() || loading}
+              >
+                {loading ? "Processing..." : <><Download size={19} /> Download</>}
+              </button>
+            </div>
 
-  try {
-    parsed = new URL(contentUrl);
-    if (!["http:", "https:"].includes(parsed.protocol)) throw Error();
-  } catch {
-    return res.status(400).json({
-      error: "Invalid content URL"
-    });
-  }
+            {error && <div className="message error"><AlertCircle /> {error}</div>}
 
-  const report = {
-    id: crypto.randomUUID(),
-    name: name.trim(),
-    email,
-    contentUrl: parsed.toString(),
-    description: description.trim(),
-    createdAt: new Date().toISOString(),
-    status: "received"
-  };
+            {result && (
+              <div className="result">
+                <CheckCircle color="#35d99b" />
+                <h3>Media processed</h3>
+                {result.caption && (
+                  <>
+                    <p>{result.caption}</p>
+                    <button className="secondary" onClick={copyCaption}>
+                      <Copy size={16} /> Copy Caption
+                    </button>
+                  </>
+                )}
+                {result.downloadUrl && (
+                  <a className="download-btn" href={result.downloadUrl}>
+                    <Download size={18} /> Save authorized media
+                  </a>
+                )}
+              </div>
+            )}
+          </section>
 
-  saveLog("dmca.jsonl", report);
+          <section className="platforms">
+            <h2>Supported Platforms</h2>
+            <div className="platform-grid">
+              {[
+                ["Facebook", "ⓕ"],
+                ["TikTok", "♪"],
+                ["Instagram", "◎"],
+                ["Twitter / X", "𝕏"]
+              ].map(([name, icon]) => (
+                <div className="platform" key={name}>
+                  <span>{icon}</span>
+                  <b>{name}</b>
+                </div>
+              ))}
+            </div>
+          </section>
 
-  res.status(201).json({
-    success: true,
-    reportId: report.id,
-    message: "DMCA request received for review"
-  });
-});
+          <section className="features">
+            <h2>Everything You Need</h2>
+            <div className="feature-grid">
+              <Feature icon={<Video />} title="Video Saver"
+                desc="Save authorized video content." />
+              <Feature icon={<Image />} title="Photo Saver"
+                desc="Keep your permitted photos." />
+              <Feature icon={<Copy />} title="Caption Copy"
+                desc="Copy available captions easily." />
+              <Feature icon={<ShieldCheck />} title="Safe & Secure"
+                desc="Respect privacy and copyrights." />
+              <Feature icon={<Download />} title="Fast Experience"
+                desc="Simple, responsive download flow." />
+              <Feature icon={<Headphones />} title="24/7 Support"
+                desc="Contact our support team anytime." />
+            </div>
+          </section>
+        </main>
+      ) : (
+        <section className="legal">
+          <h1>{pages[page]}</h1>
+          {page === "terms" && <p>
+            Users must only submit media they own or are authorized to
+            access and download. Users must comply with applicable laws
+            and the terms of third-party platforms. Abuse may result in
+            restricted access.
+          </p>}
+          {page === "privacy" && <p>
+            Explain what information is collected, why it is collected,
+            retention periods, security measures, and how users can
+            request deletion. Publish your actual data practices here.
+          </p>}
+          {page === "copyright" && <p>
+            Copyright owners can submit a DMCA or other applicable
+            copyright complaint with the copyrighted work, disputed URL,
+            contact information, a good-faith statement, and the
+            required legal declarations. Provide a designated agent
+            and valid contact details before publishing.
+          </p>}
+          {page === "support" && <p>
+            Contact support through your verified support email or
+            contact form. Provide a real support channel and response
+            hours. Do not advertise 24/7 support until it is staffed.
+          </p>}
+          <button className="download-btn" onClick={() => setPage("home")}>
+            Back to Home
+          </button>
+        </section>
+      )}
 
-// API capabilities
-app.get("/api/platforms", (req, res) => {
-  res.json({
-    platforms: Object.keys(platforms),
-    authorizedMediaUploads: true,
-    officialApiIntegrations: {
-      facebook: Boolean(process.env.FACEBOOK_CLIENT_ID),
-      instagram: Boolean(process.env.INSTAGRAM_CLIENT_ID),
-      tiktok: Boolean(process.env.TIKTOK_CLIENT_KEY),
-      twitter: Boolean(process.env.X_CLIENT_ID)
-    }
-  });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-  console.error(err);
-
-  res.status(500).json({
-    error: "Internal server error"
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`MediaVault API running on port ${PORT}`);
-});
-
-const API_BASE = "https://YOUR-BACKEND-URL.onrender.com";
-
-async function analyze() {
-  const input = document.getElementById("mediaUrl");
-  const result = document.getElementById("result");
-  const url = input.value.trim();
-
-  result.style.display = "block";
-  result.textContent = "Checking media link...";
-
-  try {
-    const response = await fetch(`${API_BASE}/api/analyze`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ url })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Unable to analyze link");
-    }
-
-    result.textContent =
-      `Platform: ${data.platform}\n` +
-      `Host: ${data.host}\n` +
-      `${data.message}`;
-  } catch (error) {
-    result.textContent = error.message ||
-      "Backend connection failed.";
-  }
+      <footer>
+        <div className="brand">Reel<span className="accent">Save</span></div>
+        <p>Fast. Simple. Responsible.</p>
+        <p>© 2026 ReelSave. All rights reserved.</p>
+        <small>Only download content you are authorized to use.</small>
+      </footer>
+    </div>
+  );
 }
 
-async function sendSupport() {
-  const email = document.getElementById("supportEmail").value.trim();
-  const message = document.getElementById("supportMessage").value.trim();
-  const status = document.getElementById("supportStatus");
-
-  status.textContent = "Sending request...";
-
-  try {
-    const response = await fetch(`${API_BASE}/api/support`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, message })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) throw new Error(data.error);
-
-    status.textContent =
-      "Request received! Ticket ID: " + data.ticketId;
-  } catch (error) {
-    status.textContent = error.message ||
-      "Unable to contact support.";
-  }
+function Feature({ icon, title, desc }) {
+  return (
+    <div className="feature">
+      <div className="feature-icon">{icon}</div>
+      <h3>{title}</h3>
+      <p>{desc}</p>
+    </div>
+  );
 }
-npm install
-     npm run dev
-     {
-  "status": "online",
-  "app": "MediaVault",
-  "version": "2.0.0"
-}
-    
