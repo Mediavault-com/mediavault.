@@ -1,19 +1,58 @@
 
 const API_URL = "https://media-vault-api.onrender.com";
-
-// Test Backend Connection
 async function checkBackend() {
+  const message = document.getElementById("message");
+
   try {
     const response = await fetch(API_URL);
     const data = await response.json();
 
-    console.log("Media Vault:", data.status);
-    return data.status === "Backend Connected";
+    if (data.status === "Backend Connected") {
+      message.textContent = "Server Connected Successfully!";
+      return true;
+    }
+
+    message.textContent = "Backend response error";
+    return false;
 
   } catch (error) {
-    console.error("Backend connection failed:", error);
+    message.textContent = "Server Connection Failed";
     return false;
   }
+}
+
+async function downloadMedia() {
+  const url = document.getElementById("mediaUrl").value;
+  const message = document.getElementById("message");
+
+  if (!url) {
+    message.textContent = "Please enter a media URL";
+    return;
+  }
+
+  try {
+    new URL(url);
+  } catch {
+    message.textContent = "Invalid URL";
+    return;
+  }
+
+  message.textContent =
+    "Backend connected. Media provider API is not configured yet.";
+}
+
+function copyCaption() {
+  const caption =
+    document.getElementById("captionText").value;
+
+  if (!caption.trim()) {
+    alert("Please enter caption");
+    return;
+  }
+
+  navigator.clipboard.writeText(caption)
+    .then(() => alert("Caption copied!"))
+    .catch(() => alert("Copy permission required"));
 }
 
 checkBackend();
