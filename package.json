@@ -1,7 +1,7 @@
+
 {
-  "name": "media-vault-api",
+  "name": "media-vault",
   "version": "1.0.0",
-  "description": "Media Vault Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
