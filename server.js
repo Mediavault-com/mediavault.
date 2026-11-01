@@ -1,6 +1,3 @@
-     const API = 'https://mediavault-api.onrender.com';
-     const res = await fetch(`${API}/api/download`, {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({ url })
-     });
+     const cors = require('cors'); // npm i cors
+     app.use(cors({ origin: 'https://haqueshahida3-cloud.github.io' }));
+     app.use(express.json());
