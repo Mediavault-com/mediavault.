@@ -1,53 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MediaVault – Fast Video, Photo, Story & Caption Downloader</title>
 <link rel="stylesheet" href="style.css">
+<script>document.documentElement.dataset.theme=localStorage.getItem("mv-theme")||"dark"</script>
 </head>
 <body>
 <header class="nav">
-  <div class="logo">▶ Media<span>Vault</span></div>
-  <nav><a href="legal.html#help">Help 24/7</a><a href="legal.html#terms">Terms</a><a href="legal.html#privacy">Privacy</a><a href="legal.html#dmca">DMCA</a></nav>
+  <div class="logo notranslate" translate="no">▶ Media<span>Vault</span></div>
+  <nav id="menu" class="menu">
+    <a href="#" data-p="youtube">YouTube</a>
+    <a href="#" data-p="instagram">Instagram</a>
+    <a href="#" data-p="twitter">Twitter/X</a>
+    <a href="#" data-p="tiktok">TikTok</a>
+    <a href="#" data-p="facebook">Facebook</a>
+  </nav>
+  <div class="tools">
+    <select id="lang" class="notranslate" translate="no" aria-label="Language"></select>
+    <button id="theme" type="button" aria-label="Dark / Light mode">☀️</button>
+  </div>
 </header>
 
 <main>
   <section class="hero">
     <h1>Download videos, photos, stories & captions</h1>
-    <p>Facebook · TikTok · Twitter/X · Instagram — fast & smooth</p>
+    <p>YouTube · Instagram · Twitter/X · TikTok · Facebook — fast & smooth</p>
     <div class="box">
       <input id="url" type="url" placeholder="Paste media link here…" autocomplete="off">
       <button id="paste" type="button">Paste</button>
-      <button id="go" type="button">Download</button>
+      <button id="go" type="button">Search</button>
     </div>
     <div id="status" class="status"></div>
+    <div id="progress" class="progress hidden">
+      <div id="ptext" class="ptext"></div>
+      <div class="pbar"><i id="pfill"></i></div>
+    </div>
   </section>
 
   <section id="result" class="result hidden">
-    <img id="thumb" alt="preview">
-    <div class="info">
+    <div class="left">
+      <img id="thumb" alt="preview" referrerpolicy="no-referrer">
       <h3 id="title"></h3>
       <small id="uploader"></small>
-      <div id="formats" class="formats"></div>
-      <div class="actions">
-        <button id="photoBtn" type="button">Download Photo</button>
-        <button id="copyBtn" type="button">Copy Caption</button>
-      </div>
+    </div>
+    <div class="right">
+      <h4>🎬 Video / Audio</h4>
+      <div id="qualities" class="qualities"></div>
+      <h4>🖼 Photos</h4>
+      <div id="photos" class="photos"></div>
+      <h4>📝 Caption</h4>
       <textarea id="caption" readonly></textarea>
+      <button id="copyBtn" type="button" class="sec">Copy Caption</button>
     </div>
   </section>
 
   <section class="features">
-    <div>⚡ Fast download</div><div>🎬 Video</div><div>🖼 Photo</div>
+    <div>⚡ Fast download</div><div>🎬 4K to 360p</div><div>🖼 Photo</div>
     <div>📖 Story</div><div>📝 Caption copy</div><div>🛟 24h support</div>
   </section>
 </main>
 
 <footer>
   <p>© <span id="y"></span> MediaVault. Only download content you own or have permission to use.</p>
-  <p><a href="legal.html#dmca">DMCA</a> · <a href="legal.html#terms">Terms</a> · <a href="legal.html#privacy">Privacy</a> · <a href="legal.html#help">Support: support@yourdomain.com</a></p>
+  <p><a href="legal.html#dmca">DMCA</a> · <a href="legal.html#terms">Terms</a> · <a href="legal.html#privacy">Privacy</a> · <a href="legal.html#help">Support 24/7</a></p>
 </footer>
+<div id="google_translate_element" style="display:none"></div>
 <script src="script.js"></script>
 </body>
 </html>
