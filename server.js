@@ -9,6 +9,40 @@ const path = require("path");
 const crypto = require("crypto");
 
 const MAX_MB = process.env.MAX_MB || "400";
+
+// Optional: bypass Instagram/X/YouTube blocks on datacenter IPs
+//   PROXY_URL = http://user:pass@host:port   (residential proxy)
+//   Cookies   = Render Secret File "cookies.txt" (best), or COOKIES_B64 / COOKIES_TXT env var
+const COMMON = [];
+let COOKIE_COUNT = 0;
+if (process.env.PROXY_URL) COMMON.push("--proxy", process.env.PROXY_URL);
+
+function loadCookies() {
+  let raw = "";
+  try { if (fs.existsSync("/etc/secrets/cookies.txt")) raw = fs.readFileSync("/etc/secrets/cookies.txt", "utf8"); } catch {}
+  if (!raw && process.env.COOKIES_B64) raw = Buffer.from(process.env.COOKIES_B64, "base64").toString("utf8");
+  if (!raw && process.env.COOKIES_TXT) raw = process.env.COOKIES_TXT;
+  if (!raw) return console.log("Cookies: none");
+  // clean: keep only valid 7-field TAB lines, drop duplicates/blank/broken lines, add header
+  const seen = new Set(), out = ["# Netscape HTTP Cookie File"];
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    if (line.startsWith("#") && !line.startsWith("#HttpOnly_")) continue;
+    if (line.split("\t").length !== 7 || seen.has(line)) continue;
+    seen.add(line); out.push(line);
+  }
+  const hosts = [...new Set(out.slice(1).map((l) => l.split("\t")[0].replace(/^#HttpOnly_/, "").replace(/^\./, "")))];
+  console.log(`Cookies loaded: ${out.length - 1} entries for: ${hosts.join(", ") || "-"}`);
+  COOKIE_COUNT = out.length - 1;
+  if (out.length > 1) {
+    const cp = path.join(os.tmpdir(), "mv-cookies.txt");
+    fs.writeFileSync(cp, out.join("\n") + "\n");
+    COMMON.push("--cookies", cp);
+  }
+}
+
+
+loadCookies();
 const app = express();
 app.set("trust proxy", 1);
 app.use(cors({ exposedHeaders: ["Content-Length", "Content-Disposition"] }));
@@ -32,7 +66,7 @@ function publicHost(h) {
 
 function runYtdlp(args) {
   return new Promise((resolve, reject) => {
-    const p = spawn("yt-dlp", args);
+    const p = spawn("yt-dlp", [...COMMON, ...args]);
     let out = "", err = "";
     const timer = setTimeout(() => { p.kill(); reject(new Error("Timeout")); }, 45_000);
     p.stdout.on("data", (d) => (out += d));
@@ -59,7 +93,7 @@ function buildQualities(item) {
 
 const bestThumb = (e) => (e.thumbnails && e.thumbnails.length ? e.thumbnails[e.thumbnails.length - 1].url : e.thumbnail) || null;
 
-app.get("/api/health", (_, res) => res.json({ ok: true }));
+app.get("/api/health", (_, res) => res.json({ ok: true, cookies: COOKIE_COUNT, proxy: !!process.env.PROXY_URL }));
 
 app.post("/api/info", async (req, res) => {
   const { url } = req.body || {};
@@ -99,7 +133,7 @@ app.get("/api/download", (req, res) => {
   else args.push("-f", `${fid}+ba/${fid}`, "--merge-output-format", "mp4");
   args.push(url);
 
-  const p = spawn("yt-dlp", args);
+  const p = spawn("yt-dlp", [...COMMON, ...args]);
   const timer = setTimeout(() => p.kill(), 180_000);
   let done = false;
   const finish = () => {
