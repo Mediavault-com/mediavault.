@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>MediaVault Admin</title>
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.dataset.theme=localStorage.getItem("mv-theme")||"dark"</script>
+<style>
+.wrap{max-width:1050px;margin:20px auto;padding:0 4%}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.card{padding:16px;border-radius:18px}.card small{color:var(--mut)}.card b{display:block;font-size:1.9rem;margin-top:4px}
+.panel{padding:18px;border-radius:20px;margin-bottom:16px}.panel h3{margin-bottom:12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab{background:var(--inner);border:1px solid var(--glass-b);border-radius:12px;padding:9px 14px}.tab.on{background:linear-gradient(135deg,var(--a),var(--b));color:#fff}
+.bars{display:flex;align-items:flex-end;gap:6px;height:190px}.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:.7rem;color:var(--mut)}
+.bar i{display:block;width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--b),var(--a));min-height:2px;transition:height .6s}.bar b{color:var(--txt);font-size:.75rem}
+.hb{display:grid;grid-template-columns:90px 1fr 50px;gap:8px;align-items:center;margin:7px 0;font-size:.9rem}.hb div{height:10px;background:var(--inner);border-radius:9px;overflow:hidden}.hb i{display:block;height:100%;background:linear-gradient(90deg,var(--a),var(--b))}
+table{width:100%;border-collapse:collapse;font-size:.85rem}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--glass-b)}th{color:var(--mut)}.scroll{overflow-x:auto}
+.login{max-width:360px;margin:12vh auto;padding:26px;border-radius:22px;text-align:center}.login input{width:100%;margin:14px 0;padding:12px;border-radius:12px;border:1px solid var(--glass-b);background:var(--inner);color:var(--txt)}
+.sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-b)}
+.tg{width:48px;height:26px;border-radius:99px;background:var(--inner);border:1px solid var(--glass-b);position:relative;transition:.25s}.tg::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}.tg.on{background:#00b894}.tg.on::after{left:24px}
+.sm{padding:5px 12px;border-radius:9px;background:var(--inner);border:1px solid var(--glass-b)}.red{color:#e17055}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+<div id="toasts" class="toasts"></div>
+<div id="login" class="login glass"><h2>🔐 Admin</h2><input id="pw" type="password" placeholder="Admin password"><button id="lg" class="btn-dl"><span class="lbl">Login</span></button></div>
+<div id="app" class="wrap hidden">
+  <header class="nav glass" style="margin:0"><a class="logo" href="index.html">▶ Media<span>Vault</span> Admin</a><button id="out" class="ghost">Logout</button></header>
+  <div class="tabs" id="tabs"></div><div id="view"></div>
+</div>
+<script>
+const API="https://mediavault-2-rtmg.onrender.com",$=id=>document.getElementById(id);let tok=sessionStorage.getItem("mv-adm"),S,TAB="over";
+const toast=(m,t='ok')=>{const e=document.createElement('div');e.className='toast '+t;e.innerHTML='<span class="ti">'+(t=='ok'?'✓':'!')+'</span><span class="tm"></span>';e.querySelector('.tm').textContent=m;$('toasts').appendChild(e);setTimeout(()=>e.remove(),3000)};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function api(p,o={}){const r=await fetch(API+p,{...o,headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok}});if(r.status==401&&p!='/api/admin/login'){logout();throw new Error('Session expired')}const d=await r.json();if(!r.ok)throw new Error(d.error||'Error');return d}
+const post=(p,b)=>api(p,{method:'POST',body:JSON.stringify(b)});
+function logout(){sessionStorage.removeItem('mv-adm');tok=null;$('app').classList.add('hidden');$('login').classList.remove('hidden')}
+$('out').onclick=logout;
+$('lg').onclick=async()=>{try{const d=await post('/api/admin/login',{password:$('pw').value});tok=d.token;sessionStorage.setItem('mv-adm',tok);start()}catch(e){toast(e.message,'err')}};
+$('pw').onkeydown=e=>e.key=='Enter'&&$('lg').click();
+const TABS={over:'📊 Users Analytics',vis:'👥 Daily Visitors',dl:'⬇ Downloads',users:'🧑 Manage Users',tools:'🧰 Manage Tools'};
+Object.entries(TABS).forEach(([k,n])=>{const b=document.createElement('button');b.className='tab';b.dataset.k=k;b.textContent=n;b.onclick=()=>{TAB=k;draw()};$('tabs').appendChild(b)});
+const card=(l,v)=>`<div class="card glass"><small>${l}</small><b>${v}</b></div>`;
+const bars=(a,f)=>{const m=Math.max(1,...a.map(x=>x[f]));return '<div class="bars">'+a.map(x=>`<div class="bar"><b>${x[f]}</b><i style="height:${Math.round(x[f]/m*140)}px"></i><span>${x.d}</span></div>`).join('')+'</div>'};
+const hb=o=>{const e=Object.entries(o).sort((a,b)=>b[1]-a[1]),m=Math.max(1,...e.map(x=>x[1]));return e.length?e.map(([k,n])=>`<div class="hb"><span>${esc(k)}</span><div><i style="width:${n/m*100}%"></i></div><b>${n}</b></div>`).join(''):'<small>No data yet</small>'};
+async function start(){$('login').classList.add('hidden');$('app').classList.remove('hidden');try{S=await api('/api/admin/stats');draw()}catch(e){toast(e.message,'err')}}
+async function draw(){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.k==TAB));const v=$('view');
+ if(TAB=='over')v.innerHTML=`<div class=cards>${card('Total users',S.totalUsers)}${card('New today',S.newToday)}${card('Active (7 days)',S.active7)}${card('Returning users',S.returning)}</div><div class="panel glass"><h3>Unique visitors – last 14 days</h3>${bars(S.last,'users')}</div>`;
+ if(TAB=='vis')v.innerHTML=`<div class=cards>${card('Today visitors',S.last[13].users)}${card('Today visits',S.last[13].visits)}${card('Total visits',S.totalVisits)}${card('Searches',S.totalSearches)}</div><div class="panel glass"><h3>Daily visits</h3>${bars(S.last,'visits')}</div><div class="panel glass scroll"><table><tr><th>Date</th><th>Visitors</th><th>Visits</th><th>Downloads</th></tr>${[...S.last].reverse().map(x=>`<tr><td>${x.d}</td><td>${x.users}</td><td>${x.visits}</td><td>${x.dl}</td></tr>`).join('')}</table></div>`;
+ if(TAB=='dl')v.innerHTML=`<div class=cards>${card('Total downloads',S.totalDl)}${card('Today',S.last[13].dl)}</div><div class="panel glass"><h3>Downloads per day</h3>${bars(S.last,'dl')}</div><div class="panel glass"><h3>By platform</h3>${hb(S.plat)}</div><div class="panel glass"><h3>By quality</h3>${hb(S.qual)}</div><div class="panel glass scroll"><h3>Recent</h3><table><tr><th>Time</th><th>Platform</th><th>Quality</th></tr>${S.recent.map(r=>`<tr><td>${new Date(r.t).toLocaleString()}</td><td>${esc(r.p)}</td><td>${esc(r.q)}</td></tr>`).join('')}</table></div>`;
+ if(TAB=='users'){const d=await api('/api/admin/users');v.innerHTML=`<div class="panel glass scroll"><h3>Visitors (latest 200)</h3><small>Anonymous visitor IDs. No login system yet.</small><table><tr><th>ID</th><th>First seen</th><th>Last seen</th><th>Visits</th><th>Downloads</th><th></th></tr>${d.users.map(u=>`<tr><td>${esc(u.id.slice(0,8))}…</td><td>${new Date(u.first).toLocaleDateString()}</td><td>${new Date(u.last).toLocaleString()}</td><td>${u.visits}</td><td>${u.dl}</td><td><button class="sm ${u.blocked?'':'red'}" data-id="${esc(u.id)}" data-b="${u.blocked?0:1}">${u.blocked?'Unblock':'Block'}</button></td></tr>`).join('')}</table></div>`;
+  v.querySelectorAll('[data-id]').forEach(b=>b.onclick=async()=>{try{await post('/api/admin/block',{id:b.dataset.id,block:+b.dataset.b});toast('Updated');draw()}catch(e){toast(e.message,'err')}})}
+ if(TAB=='tools'){const d=await api('/api/admin/tools');v.innerHTML='<div class="panel glass"><h3>Turn tools on / off</h3>'+d.all.map(k=>`<div class="sw"><span>${esc(k)}</span><div class="tg ${d.disabled[k]?'':'on'}" data-k="${k}" data-on="${d.disabled[k]?1:0}"></div></div>`).join('')+'</div>';
+  v.querySelectorAll('.tg').forEach(t=>t.onclick=async()=>{try{await post('/api/admin/tools',{key:t.dataset.k,enabled:!!+t.dataset.on});toast('Saved');draw()}catch(e){toast(e.message,'err')}})}}
+if(tok)start();
+</script>
+</body></html>
