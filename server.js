@@ -15,6 +15,15 @@ const MAX_MB = process.env.MAX_MB || "400";
 //   Cookies   = Render Secret File "cookies.txt" (best), or COOKIES_B64 / COOKIES_TXT env var
 const COMMON = [];
 let COOKIE_COUNT = 0;
+
+// TikTok often needs a browser-like TLS fingerprint (curl_cffi). Detect once at startup.
+let IMPERSONATE_OK = false;
+try {
+  const r = require("child_process").spawnSync("yt-dlp", ["--list-impersonate-targets"], { encoding: "utf8", timeout: 20000 });
+  IMPERSONATE_OK = (r.stdout || "").split("\n").some((l) => /chrome/i.test(l) && /curl_cffi/i.test(l) && !/unavailable/i.test(l));
+} catch {}
+console.log("Impersonate available:", IMPERSONATE_OK);
+const extra = (u) => (IMPERSONATE_OK && /tiktok\.com/i.test(u) ? ["--impersonate", "chrome"] : []);
 if (process.env.PROXY_URL) COMMON.push("--proxy", process.env.PROXY_URL);
 
 function loadCookies() {
@@ -93,14 +102,14 @@ function buildQualities(item) {
 
 const bestThumb = (e) => (e.thumbnails && e.thumbnails.length ? e.thumbnails[e.thumbnails.length - 1].url : e.thumbnail) || null;
 
-app.get("/api/health", (_, res) => res.json({ ok: true, cookies: COOKIE_COUNT, proxy: !!process.env.PROXY_URL }));
+app.get("/api/health", (_, res) => res.json({ ok: true, cookies: COOKIE_COUNT, proxy: !!process.env.PROXY_URL, impersonate: IMPERSONATE_OK }));
 
 app.post("/api/info", async (req, res) => {
   const { url } = req.body || {};
   if (!url) return res.status(400).json({ error: "Media URL dao." });
   if (!validUrl(url)) return res.status(400).json({ error: "Ei link support kore na." });
   try {
-    const d = JSON.parse(await runYtdlp(["-J", "--no-warnings", url]));
+    const d = JSON.parse(await runYtdlp(["-J", "--no-warnings", ...extra(url), url]));
     const entries = d.entries && d.entries.length ? d.entries : [d];
     const item = entries.find((e) => (e.formats || []).some((f) => f.height && f.vcodec !== "none")) || entries[0];
     res.json({
@@ -131,7 +140,7 @@ app.get("/api/download", (req, res) => {
   const args = ["--no-playlist", "--no-warnings", "--max-filesize", MAX_MB + "M", "-o", path.join(tmp, tag + ".%(ext)s")];
   if (mp3) args.push("-x", "--audio-format", "mp3");
   else args.push("-f", `${fid}+ba/${fid}`, "--merge-output-format", "mp4");
-  args.push(url);
+  args.push(...extra(url), url);
 
   const p = spawn("yt-dlp", [...COMMON, ...args]);
   const timer = setTimeout(() => p.kill(), 180_000);
