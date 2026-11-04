@@ -1,8 +1,9 @@
 FROM node:20-slim
-RUN apt-get update && apt-get install -y python3 ffmpeg curl ca-certificates unzip && \
+RUN apt-get update && apt-get install -y python3 ffmpeg curl ca-certificates unzip python3-pip && \
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
     chmod +x /usr/local/bin/yt-dlp && \
     curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh && \
+    pip3 install --no-cache-dir --break-system-packages curl_cffi && \
     rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json .
