@@ -6,6 +6,7 @@ const mb = (n) => (n / 1048576).toFixed(1);
 const urlInput = $("url"), statusEl = $("status"), goBtn = $("go");
 const root = document.documentElement;
 $("y").textContent = new Date().getFullYear();
+const VID = localStorage.getItem("mv-vid") || (localStorage.setItem("mv-vid", crypto.randomUUID()), localStorage.getItem("mv-vid"));
 
 /* ---------- Toasts ---------- */
 const ICON = { ok: "✓", err: "!", info: "i" };
@@ -145,7 +146,7 @@ async function getFile(endpoint, fallbackName, label, btn) {
   try {
     btnState(btn, "loading", "Preparing…", 0);
     pStart(`${label}: server e prepare hocche… ⏳`);
-    const r = await fetch(API_BASE + endpoint);
+    const r = await fetch(API_BASE + endpoint, { headers: { "x-vid": VID } });
     if (!r.ok) throw new Error((await r.text()).slice(0, 140) || "Download failed");
     const total = +r.headers.get("Content-Length") || 0;
     const reader = r.body.getReader(), chunks = [];
@@ -187,7 +188,7 @@ goBtn.onclick = async () => {
   $("skeleton").classList.remove("hidden");
   setLoading("Media khujchi… prothom bar 30-50 sec lagte pare");
   try {
-    const r = await fetch(API_BASE + "/api/info", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+    const r = await fetch(API_BASE + "/api/info", { method: "POST", headers: { "Content-Type": "application/json", "x-vid": VID }, body: JSON.stringify({ url }) });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "Failed");
     render(url, d);
@@ -214,7 +215,7 @@ function render(url, d) {
     const s = document.createElement("small"); s.textContent = x.id ? (x.size ? `~${mb(x.size)} MB` : "Available") : "Not available";
     info.append(b, s);
     const btn = mkBtn("Download"); btn.disabled = !x.id;
-    btn.onclick = () => getFile(`/api/download?url=${enc(url)}&fid=${enc(x.id)}`, `mediavault-${x.label}.mp4`, x.label, btn);
+    btn.onclick = () => getFile(`/api/download?url=${enc(url)}&fid=${enc(x.id)}&ql=${enc(x.label)}`, `mediavault-${x.label}.mp4`, x.label, btn);
     row.append(info, btn); q.appendChild(row);
   });
 
@@ -238,3 +239,11 @@ function render(url, d) {
   $("result").classList.remove("hidden");
   setTimeout(() => $("result").scrollIntoView({ behavior: "smooth", block: "start" }), 100);
 }
+
+/* ---------- Visit tracking + admin switches ---------- */
+fetch(API_BASE + "/api/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ vid: VID, page: location.pathname }) })
+  .then((r) => r.json())
+  .then((c) => {
+    (c.disabled || []).forEach((k) => document.querySelectorAll(`[data-p="${k}"]`).forEach((a) => (a.style.display = "none")));
+    if (c.blocked) toast("Your access has been blocked.", "err", 8000);
+  }).catch(() => {});
