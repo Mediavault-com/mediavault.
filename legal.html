@@ -1,30 +1,43 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MediaVault – Terms, Privacy, DMCA & Help</title><link rel="stylesheet" href="style.css"></head>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MediaVault – Terms, Privacy, DMCA & Help</title>
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.dataset.theme=localStorage.getItem("mv-theme")||"dark"</script>
+</head>
 <body>
-<header class="nav"><div class="logo">▶ Media<span>Vault</span></div><nav><a href="index.html">Home</a></nav></header>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="nav glass">
+  <a href="index.html" class="logo" translate="no">▶ Media<span>Vault</span></a>
+  <a href="index.html" class="ghost">← Home</a>
+</header>
 <div class="page">
-<section id="terms"><h2>Terms of Service</h2>
+<section class="glass" id="terms"><h2>Terms of Service</h2>
 <ul><li>MediaVault is a tool for saving content you own or have permission to download.</li>
 <li>You are responsible for how you use downloaded content and must respect copyright and platform rules.</li>
 <li>Do not use the service for illegal, abusive or infringing purposes.</li>
 <li>The service is provided "as is" without warranty. We may limit or block abusive usage.</li>
-<li>MediaVault is not affiliated with Facebook, TikTok, X/Twitter or Instagram.</li></ul></section>
+<li>MediaVault is not affiliated with Facebook, TikTok, X/Twitter, Instagram or YouTube.</li></ul></section>
 
-<section id="privacy"><h2>Privacy Policy</h2>
+<section class="glass" id="privacy"><h2>Privacy Policy</h2>
 <ul><li>We do not require registration and do not store downloaded media.</li>
 <li>Links you paste are processed only to fetch the media and may appear in temporary server logs.</li>
 <li>We may use basic analytics/cookies (e.g. ads or traffic stats). Third parties may set their own cookies.</li>
 <li>Contact us to request removal of any logs: support@yourdomain.com</li></ul></section>
 
-<section id="dmca"><h2>DMCA / Copyright</h2>
+<section class="glass" id="dmca"><h2>DMCA / Copyright</h2>
 <p>We respect intellectual property. If you believe content is being used in a way that infringes your copyright, email <b>dmca@yourdomain.com</b> with: your name and contact details, the URL of the work, a statement of good-faith belief, a statement that your information is accurate and that you are the owner or authorized agent, and your signature. We act on valid notices promptly.</p></section>
 
-<section id="help"><h2>Help & Support (24/7)</h2>
+<section class="glass" id="help"><h2>Help & Support (24/7)</h2>
 <p>Email: <b>support@yourdomain.com</b> — we reply within 24 hours.</p>
 <ul><li>Link must be public (private posts cannot be downloaded).</li>
 <li>Copy the full URL from the share button.</li>
 <li>If download fails, try again after a minute or try another quality.</li></ul></section>
 </div>
-<footer><p>© MediaVault</p></footer>
+<footer class="footer glass"><div class="fbottom" style="border:0;margin:0;padding:0"><span>© MediaVault</span><a href="index.html">Back to downloader</a></div></footer>
+<script>
+document.addEventListener("click",function(e){var a=e.target.closest("a[href]");if(!a)return;var u=new URL(a.href,location.href);if(u.origin!==location.origin||u.pathname===location.pathname)return;e.preventDefault();document.body.classList.add("leaving");setTimeout(function(){location.href=a.href},260)});
+addEventListener("pageshow",function(){document.body.classList.remove("leaving")});
+</script>
 </body></html>
