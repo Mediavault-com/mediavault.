@@ -118,5 +118,7 @@ P.addEventListener('input',e=>T[cur].l&&T[cur].l(e));
 open(T[location.hash.slice(1)]?location.hash.slice(1):'json');
 document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(!a)return;const u=new URL(a.href,location.href);if(u.origin!==location.origin||u.pathname===location.pathname)return;e.preventDefault();document.body.classList.add('leaving');setTimeout(()=>location.href=a.href,260)});
 addEventListener('pageshow',()=>document.body.classList.remove('leaving'));
+const VID=localStorage.getItem('mv-vid')||(localStorage.setItem('mv-vid',crypto.randomUUID()),localStorage.getItem('mv-vid'));
+fetch('https://mediavault-2-rtmg.onrender.com/api/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vid:VID,page:'/tools'})}).then(r=>r.json()).then(c=>(c.disabled||[]).forEach(k=>{const b=tabs.querySelector('[data-k="'+k+'"]');if(b)b.remove()})).catch(()=>{});
 </script>
 </body></html>
