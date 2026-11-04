@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MediaVault Developer Tools</title>
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.dataset.theme=localStorage.getItem("mv-theme")||"dark"</script>
+<style>
+.tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:980px;margin:0 auto 18px}
+.tab{background:var(--inner);border:1px solid var(--glass-b);border-radius:12px;padding:9px 14px;font-size:.9rem;transition:.2s}
+.tab:hover{transform:translateY(-2px)}.tab.on{background:linear-gradient(135deg,var(--a),var(--b));color:#fff}
+.tool{max-width:980px;margin:0 auto 30px;padding:20px;border-radius:22px;animation:rise .5s}
+.tool textarea,.tool input,.tool select{width:100%;background:var(--inner);border:1px solid var(--glass-b);border-radius:12px;color:var(--txt);padding:10px;font:14px ui-monospace,Menlo,monospace;margin:6px 0;outline:0}
+.tool textarea{min-height:170px;resize:vertical}.tool textarea:focus,.tool input:focus{border-color:var(--a)}
+.r{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tool label{font-size:.85rem;color:var(--mut)}.ok{color:#00b894}.bad{color:#e17055}
+.out{background:var(--inner);border:1px solid var(--glass-b);border-radius:12px;padding:12px;min-height:170px;overflow:auto;word-break:break-word}
+.out pre{background:rgba(0,0,0,.3);padding:10px;border-radius:8px;overflow:auto}.out blockquote{border-left:3px solid var(--a);padding-left:10px;color:var(--mut)}
+mark{background:var(--b);color:#000;border-radius:4px;padding:0 2px}#sw{height:70px;border-radius:14px;border:1px solid var(--glass-b);margin:8px 0}
+.tool li{margin-left:18px;line-height:1.7}.tool p{margin:6px 0}
+@media(max-width:700px){.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+<div id="toasts" class="toasts"></div>
+<header class="nav glass">
+  <a href="index.html" class="logo" translate="no">▶ Media<span>Vault</span></a>
+  <a href="index.html" class="ghost">← Downloader</a>
+</header>
+<main>
+  <section class="hero" style="padding:40px 0 20px"><h1>Developer <span class="grad">Tools</span></h1><p>Free, fast, runs in your browser. Nothing is uploaded.</p></section>
+  <div id="tabs" class="tabs"></div>
+  <div id="panel" class="tool glass"></div>
+</main>
+<script>
+const P=document.getElementById('panel'),$=id=>P.querySelector('#'+id),v=id=>$(id).value,w=(id,s)=>{$(id).value=s},
+msg=(s,ok)=>{const m=$('m');if(m){m.textContent=s;m.className=ok?'ok':'bad'}},
+B=(a,t)=>`<button class="btn-dl small" data-a="${a}"><span class="lbl">${t}</span></button>`,
+toast=m=>{const t=document.createElement('div');t.className='toast ok';t.innerHTML='<span class="ti">✓</span><span class="tm"></span>';t.querySelector('.tm').textContent=m;document.getElementById('toasts').appendChild(t);setTimeout(()=>t.remove(),2200)},
+cp=async id=>{try{await navigator.clipboard.writeText(v(id));toast('Copied')}catch{toast('Copy failed')}},
+esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])),
+TA=(id,ph,ro)=>`<textarea id="${id}" placeholder="${ph||''}" ${ro?'readonly':''}></textarea>`;
+
+const T={
+json:{n:'{ } JSON Formatter',h:TA('i','Paste JSON')+`<div class=r>${B('f','Format')}${B('m','Minify')}${B('c','Copy output')}</div>`+TA('o','',1)+'<p id=m></p>',
+ a:{f(){run(2)},m(){run(0)},c(){cp('o')}}},
+min:{n:'⚡ Code Minifier',h:`<select id=t><option>css</option><option>js</option><option>html</option></select>`+TA('i','Paste code')+`<div class=r>${B('go','Minify')}${B('c','Copy')}</div>`+TA('o','',1)+'<p id=m></p><small>Basic minifier. For production JS use Terser.</small>',
+ a:{go(){let s=v('i'),t=v('t'),o;
+  if(t=='css')o=s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\s+/g,' ').replace(/\s*([{}:;,>])\s*/g,'$1').replace(/;}/g,'}').trim();
+  else if(t=='html')o=s.replace(/<!--[\s\S]*?-->/g,'').replace(/>\s+</g,'><').replace(/\s{2,}/g,' ').trim();
+  else o=s.replace(/\/\*[\s\S]*?\*\//g,'').split('\n').map(x=>x.trim()).filter(x=>x&&!x.startsWith('//')).join('\n');
+  w('o',o);msg(`✓ ${s.length} → ${o.length} chars (${s.length?Math.round(100-o.length/s.length*100):0}% smaller)`,1)},c(){cp('o')}}},
+html:{n:'🧩 HTML Validator',h:TA('i','Paste HTML')+`<div class=r>${B('go','Validate')}</div><p id=m></p><ul id=l></ul><small>Checks unclosed/mismatched tags, duplicate ids, missing img alt.</small>`,
+ a:{go(){const s=v('i'),VOID=/^(area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/,OPT=/^(p|li|td|th|tr|dt|dd|option|tbody|thead|tfoot)$/,st=[],er=[],ids={},
+  c=s.replace(/<!--[\s\S]*?-->|<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi,m=>m.replace(/[^\n]/g,' ')),ln=i=>s.slice(0,i).split('\n').length;
+  c.replace(/<(\/?)([a-zA-Z][\w-]*)([^>]*)>/g,(m,cl,t,at,i)=>{t=t.toLowerCase();
+   if(cl){while(st.length&&OPT.test(st[st.length-1].t)&&st[st.length-1].t!==t)st.pop();
+    if(!st.length||st[st.length-1].t!==t){er.push(`Line ${ln(i)}: unexpected </${t}>`);const k=st.map(x=>x.t).lastIndexOf(t);if(k>=0)st.length=k}else st.pop()}
+   else{if(t=='img'&&!/\balt\s*=/.test(at))er.push(`Line ${ln(i)}: <img> missing alt`);
+    const id=at.match(/\bid\s*=\s*["']?([^"'\s>]+)/);if(id){if(ids[id[1]])er.push(`Line ${ln(i)}: duplicate id "${id[1]}"`);ids[id[1]]=1}
+    if(!VOID.test(t)&&!/\/\s*$/.test(at))st.push({t,l:ln(i)})}return m});
+  st.forEach(x=>{if(!OPT.test(x.t))er.push(`Line ${x.l}: <${x.t}> is not closed`)});
+  $('l').innerHTML=er.map(x=>`<li>${esc(x)}</li>`).join('');msg(er.length?`✗ ${er.length} issue(s)`:'✓ No issues found',!er.length)}}},
+css:{n:'🎨 CSS Validator',h:TA('i','Paste CSS')+`<div class=r>${B('go','Validate')}</div><p id=m></p><ul id=l></ul><small>Checks braces and property/value support in your browser.</small>`,
+ a:{go(){const s=v('i').replace(/\/\*[\s\S]*?\*\//g,''),er=[];let d=0;
+  for(const ch of s){if(ch=='{')d++;if(ch=='}')d--;if(d<0)break}
+  if(d)er.push('Unbalanced { } braces');
+  s.replace(/([^{}]+)\{([^{}]*)\}/g,(m,sel,body)=>{if(/^\s*@(keyframes|media|supports)/.test(sel))return m;
+   body.split(';').forEach(x=>{x=x.trim();if(!x)return;const k=x.indexOf(':');
+    if(k<1){er.push(`${sel.trim()}: bad declaration "${x}"`);return}
+    const p=x.slice(0,k).trim(),val=x.slice(k+1).trim();if(p.startsWith('--'))return;
+    if(!CSS.supports(p,val))er.push(`${sel.trim()}: "${p}: ${val}" invalid or unsupported`)});return m});
+  $('l').innerHTML=er.map(x=>`<li>${esc(x)}</li>`).join('');msg(er.length?`✗ ${er.length} issue(s)`:'✓ No issues found',!er.length)}}},
+re:{n:'🔎 Regex Tester',h:`<div class=g2><div><label>Pattern</label><input id=p placeholder="(\\d+)-(\\w+)"></div><div><label>Flags</label><input id=f value=g></div></div><label>Test text</label>`+TA('t','Text to test')+'<p id=m></p><div id=o class=out></div><ul id=l></ul>',
+ l(){let re;try{re=new RegExp(v('p'),v('f'))}catch(x){msg('✗ '+x.message);$('o').innerHTML='';return}
+  if(!re.global)re=new RegExp(re.source,re.flags+'g');const t=v('t');let out='',last=0,n=0,rows=[];
+  for(const m of t.matchAll(re)){if(!m[0])continue;out+=esc(t.slice(last,m.index))+'<mark>'+esc(m[0])+'</mark>';last=m.index+m[0].length;n++;
+   rows.push(`#${n} @${m.index}: ${esc(m[0])}`+(m.length>1?' | groups: '+m.slice(1).map(g=>esc(String(g))).join(', '):''))}
+  $('o').innerHTML=out+esc(t.slice(last));$('l').innerHTML=rows.slice(0,100).map(r=>`<li>${r}</li>`).join('');msg(n+' match(es)',n>0)}},
+md:{n:'📝 Markdown Editor',h:`<div class=g2><div>${TA('i','# Hello\n\nWrite **markdown** here')}</div><div id=o class=out></div></div><div class=r>${B('c','Copy HTML')}</div>`,
+ l(){const st=[],inl=x=>x.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\*([^*]+)\*/g,'<i>$1</i>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  let s=esc(v('i')).replace(/```([\s\S]*?)```/g,(m,c)=>{st.push(c.replace(/^\w*\n/,'').trim());return '\u0000'+(st.length-1)+'\u0000'});
+  $('o').innerHTML=s.split(/\n{2,}/).map(b=>{b=b.trim();let m;
+   if(m=b.match(/^\u0000(\d+)\u0000$/))return '<pre><code>'+st[m[1]]+'</code></pre>';
+   if(/^#{1,6} /.test(b)){const n=b.match(/^#+/)[0].length;return `<h${n}>${inl(b.slice(n+1))}</h${n}>`}
+   if(/^([-*] .*(\n|$))+$/.test(b))return '<ul>'+b.split('\n').map(x=>`<li>${inl(x.slice(2))}</li>`).join('')+'</ul>';
+   if(/^(\d+\. .*(\n|$))+$/.test(b))return '<ol>'+b.split('\n').map(x=>`<li>${inl(x.replace(/^\d+\. /,''))}</li>`).join('')+'</ol>';
+   if(/^&gt; /.test(b))return `<blockquote>${inl(b.replace(/^&gt; /gm,''))}</blockquote>`;
+   return b?`<p>${inl(b).replace(/\n/g,'<br>')}</p>`:''}).join('')},
+ a:{c(){navigator.clipboard.writeText($('o').innerHTML).then(()=>toast('HTML copied'))}}},
+color:{n:'🌈 Color Converter',h:`<div class=g2><div><label>Color (name, HEX, RGB, HSL)</label><input id=i value="#6c5ce7"></div><div><label>Picker</label><input id=p type=color value="#6c5ce7" style="height:44px;padding:4px"></div></div><div id=sw></div><label>HEX</label><input id=hx readonly><label>RGB</label><input id=rg readonly><label>HSL</label><input id=hs readonly><p id=m></p>`,
+ l(e){if(e&&e.target.id=='p')w('i',v('p'));const t=document.createElement('i');t.style.color=v('i');if(!t.style.color){msg('✗ Invalid color');return}
+  document.body.appendChild(t);const [r,g,b]=getComputedStyle(t).color.match(/[\d.]+/g).slice(0,3).map(Number);t.remove();
+  const h=r/255,s=g/255,l2=b/255,mx=Math.max(h,s,l2),mn=Math.min(h,s,l2),d=mx-mn,L=(mx+mn)/2,S=d?d/(1-Math.abs(2*L-1)):0;
+  let H=d?(mx==h?((s-l2)/d)%6:mx==s?(l2-h)/d+2:(h-s)/d+4)*60:0;if(H<0)H+=360;
+  const hex='#'+[r,g,b].map(x=>Math.round(x).toString(16).padStart(2,'0')).join('');
+  $('sw').style.background=hex;w('hx',hex);w('rg',`rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`);w('hs',`hsl(${Math.round(H)}, ${Math.round(S*100)}%, ${Math.round(L*100)}%)`);msg('✓ Converted',1)}},
+uuid:{n:'🆔 UUID Generator',h:`<div class=g2><div><label>How many (1-100)</label><input id=n type=number value=5 min=1 max=100></div><div><label>Format</label><select id=f><option>lowercase</option><option>UPPERCASE</option><option>no dashes</option></select></div></div><div class=r>${B('go','Generate')}${B('c','Copy')}</div>`+TA('o','',1),
+ l(){},a:{go(){const n=Math.min(100,Math.max(1,+v('n')||1)),f=v('f');
+  w('o',Array.from({length:n},()=>{let u=crypto.randomUUID();return f=='UPPERCASE'?u.toUpperCase():f=='no dashes'?u.replace(/-/g,''):u}).join('\n'))},c(){cp('o')}},init(){this.a.go()}},
+b64:{n:'🔐 Base64 Encoder/Decoder',h:TA('i','Text or Base64')+`<div class=r>${B('e','Encode')}${B('d','Decode')}${B('c','Copy')}</div>`+TA('o','',1)+'<p id=m></p>',
+ a:{e(){try{w('o',btoa(unescape(encodeURIComponent(v('i')))));msg('✓ Encoded',1)}catch(x){msg('✗ '+x.message)}},
+  d(){try{w('o',decodeURIComponent(escape(atob(v('i').trim()))));msg('✓ Decoded',1)}catch{msg('✗ Not valid Base64')}},c(){cp('o')}}},
+api:{n:'🌐 API Tester',h:`<div class=g2><div><label>Method</label><select id=me><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></div><div><label>URL</label><input id=u placeholder="https://api.example.com/data"></div></div><label>Headers (JSON)</label>`+TA('hd','{"Content-Type":"application/json"}')+'<label>Body</label>'+TA('bd','{"key":"value"}')+`<div class=r>${B('send','Send')}</div><p id=m></p>`+TA('o','',1)+'<small>Browser requests need the API to allow CORS.</small>',
+ a:{async send(){let h={};try{h=v('hd')?JSON.parse(v('hd')):{}}catch{return msg('✗ Headers must be JSON')}
+  const me=v('me'),t=performance.now();msg('Sending…',1);
+  try{const r=await fetch(v('u'),{method:me,headers:h,body:me=='GET'?undefined:v('bd')||undefined}),tx=await r.text();let b=tx;try{b=JSON.stringify(JSON.parse(tx),null,2)}catch{}
+   w('o',`${r.status} ${r.statusText} · ${Math.round(performance.now()-t)} ms\n\n`+[...r.headers].map(x=>x.join(': ')).join('\n')+'\n\n'+b);msg((r.ok?'✓ ':'✗ ')+r.status,r.ok)}
+  catch(x){msg('✗ '+x.message+' (network or CORS blocked)')}}}}
+};
+function run(n){try{w('o',JSON.stringify(JSON.parse(v('i')),null,n));msg('✓ Valid JSON',1)}catch(x){msg('✗ '+x.message)}}
+let cur='json';const tabs=document.getElementById('tabs');
+function open(k){cur=k;location.hash=k;P.innerHTML=T[k].h;tabs.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.k==k));T[k].init&&T[k].init();T[k].l&&T[k].l()}
+Object.keys(T).forEach(k=>{const b=document.createElement('button');b.className='tab';b.dataset.k=k;b.textContent=T[k].n;b.onclick=()=>open(k);tabs.appendChild(b)});
+P.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b)T[cur].a[b.dataset.a]()});
+P.addEventListener('input',e=>T[cur].l&&T[cur].l(e));
+open(T[location.hash.slice(1)]?location.hash.slice(1):'json');
+document.addEventListener('click',e=>{const a=e.target.closest('a[href]');if(!a)return;const u=new URL(a.href,location.href);if(u.origin!==location.origin||u.pathname===location.pathname)return;e.preventDefault();document.body.classList.add('leaving');setTimeout(()=>location.href=a.href,260)});
+addEventListener('pageshow',()=>document.body.classList.remove('leaving'));
+</script>
+</body></html>
