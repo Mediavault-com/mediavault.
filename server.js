@@ -102,12 +102,103 @@ function buildQualities(item) {
 
 const bestThumb = (e) => (e.thumbnails && e.thumbnails.length ? e.thumbnails[e.thumbnails.length - 1].url : e.thumbnail) || null;
 
+/* ---------- Stats, admin, tool control ---------- */
+const DATA_FILE = path.join(process.env.DATA_DIR || __dirname, "stats.json");
+let DB = { visitors: {}, days: {}, recent: [], blocked: {}, disabled: {} };
+try { DB = { ...DB, ...JSON.parse(fs.readFileSync(DATA_FILE, "utf8")) }; } catch {}
+let dirty = false;
+setInterval(() => { if (dirty) { dirty = false; fs.writeFile(DATA_FILE, JSON.stringify(DB), () => {}); } }, 15000);
+const ALL_TOOLS = ["youtube","instagram","twitter","tiktok","facebook","json","min","html","css","re","md","color","uuid","b64","api"];
+const today = () => new Date().toISOString().slice(0, 10);
+const D = () => (DB.days[today()] ??= { visits: 0, users: {}, dl: 0, searches: 0, plat: {}, qual: {} });
+const ipH = (r) => crypto.createHash("sha256").update((r.ip || "") + (process.env.HASH_SALT || "mv")).digest("hex").slice(0, 12);
+const vidOf = (r) => String(r.headers["x-vid"] || (r.body && r.body.vid) || "").slice(0, 64);
+const plat = (u) => { try { const h = new URL(u).hostname.replace(/^www\./, ""); return /youtu/.test(h) ? "youtube" : /instagram/.test(h) ? "instagram" : /(^|\.)(x|twitter)\.com$|^t\.co$/.test(h) ? "twitter" : /tiktok/.test(h) ? "tiktok" : /facebook|fb\./.test(h) ? "facebook" : "other"; } catch { return "other"; } };
+const isBlocked = (r) => DB.blocked[vidOf(r)] || DB.blocked[ipH(r)];
+function touch(r, page) {
+  const id = vidOf(r); if (!id) return;
+  const v = (DB.visitors[id] ??= { first: Date.now(), visits: 0, dl: 0 });
+  v.last = Date.now(); v.ip = ipH(r);
+  if (page) { v.visits++; const d = D(); d.visits++; d.users[id] = 1; }
+  dirty = true;
+}
+function guard(req, res, url) {
+  if (isBlocked(req)) { res.status(403).json({ error: "Your access has been blocked." }); return true; }
+  const p = plat(url);
+  if (DB.disabled[p]) { res.status(403).json({ error: `${p} is temporarily turned off.` }); return true; }
+  return false;
+}
+function logDl(req, url, q) {
+  const d = D(), p = plat(url);
+  d.dl++; d.plat[p] = (d.plat[p] || 0) + 1; d.qual[q] = (d.qual[q] || 0) + 1;
+  const v = DB.visitors[vidOf(req)]; if (v) v.dl++;
+  DB.recent.unshift({ t: Date.now(), p, q }); DB.recent.length = Math.min(DB.recent.length, 100);
+  dirty = true;
+}
+app.post("/api/track", (req, res) => {
+  touch(req, (req.body && req.body.page) || "/");
+  res.json({ blocked: !!isBlocked(req), disabled: Object.keys(DB.disabled).filter((k) => DB.disabled[k]) });
+});
+
+// Admin (set ADMIN_PASSWORD in Render > Environment)
+const TOKENS = new Map();
+const adminOk = (req, res, next) => {
+  const t = (req.headers.authorization || "").replace("Bearer ", "");
+  if ((TOKENS.get(t) || 0) > Date.now()) return next();
+  res.status(401).json({ error: "Unauthorized" });
+};
+app.post("/api/admin/login", rateLimit({ windowMs: 60_000, max: 6 }), (req, res) => {
+  const pw = process.env.ADMIN_PASSWORD;
+  if (!pw) return res.status(503).json({ error: "ADMIN_PASSWORD set kora nei (Render Environment)." });
+  const a = Buffer.from(String((req.body && req.body.password) || "")), b = Buffer.from(pw);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return res.status(401).json({ error: "Wrong password" });
+  const t = crypto.randomBytes(24).toString("hex");
+  TOKENS.set(t, Date.now() + 12 * 3600e3);
+  res.json({ token: t });
+});
+app.get("/api/admin/stats", adminOk, (req, res) => {
+  const keys = Object.keys(DB.days), last = [];
+  for (let i = 13; i >= 0; i--) {
+    const k = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10), x = DB.days[k];
+    last.push({ d: k.slice(5), visits: x ? x.visits : 0, users: x ? Object.keys(x.users).length : 0, dl: x ? x.dl : 0 });
+  }
+  const sum = (f) => keys.reduce((s, k) => s + f(DB.days[k]), 0), plat = {}, qual = {};
+  keys.forEach((k) => { for (const [p, n] of Object.entries(DB.days[k].plat)) plat[p] = (plat[p] || 0) + n; for (const [q, n] of Object.entries(DB.days[k].qual)) qual[q] = (qual[q] || 0) + n; });
+  const vs = Object.values(DB.visitors), start = new Date(today()).getTime();
+  res.json({
+    totalUsers: vs.length, newToday: vs.filter((v) => v.first >= start).length,
+    active7: vs.filter((v) => v.last > Date.now() - 7 * 864e5).length, returning: vs.filter((v) => v.visits > 1).length,
+    totalVisits: sum((x) => x.visits), totalDl: sum((x) => x.dl), totalSearches: sum((x) => x.searches),
+    last, plat, qual, recent: DB.recent.slice(0, 30),
+  });
+});
+app.get("/api/admin/users", adminOk, (req, res) => {
+  const rows = Object.entries(DB.visitors).map(([id, v]) => ({ id, ...v, blocked: !!(DB.blocked[id] || DB.blocked[v.ip]) }))
+    .sort((a, b) => (b.last || 0) - (a.last || 0)).slice(0, 200);
+  res.json({ users: rows });
+});
+app.post("/api/admin/block", adminOk, (req, res) => {
+  const { id, block } = req.body || {}, v = DB.visitors[id];
+  if (!v) return res.status(404).json({ error: "User not found" });
+  if (block) { DB.blocked[id] = 1; DB.blocked[v.ip] = 1; } else { delete DB.blocked[id]; delete DB.blocked[v.ip]; }
+  dirty = true; res.json({ ok: true });
+});
+app.get("/api/admin/tools", adminOk, (req, res) => res.json({ all: ALL_TOOLS, disabled: DB.disabled }));
+app.post("/api/admin/tools", adminOk, (req, res) => {
+  const { key, enabled } = req.body || {};
+  if (!ALL_TOOLS.includes(key)) return res.status(400).json({ error: "Unknown tool" });
+  if (enabled) delete DB.disabled[key]; else DB.disabled[key] = true;
+  dirty = true; res.json({ ok: true });
+});
+
 app.get("/api/health", (_, res) => res.json({ ok: true, cookies: COOKIE_COUNT, proxy: !!process.env.PROXY_URL, impersonate: IMPERSONATE_OK }));
 
 app.post("/api/info", async (req, res) => {
   const { url } = req.body || {};
   if (!url) return res.status(400).json({ error: "Media URL dao." });
   if (!validUrl(url)) return res.status(400).json({ error: "Ei link support kore na." });
+  if (guard(req, res, url)) return;
+  touch(req); D().searches++; dirty = true;
   try {
     const d = JSON.parse(await runYtdlp(["-J", "--no-warnings", ...extra(url), url]));
     const entries = d.entries && d.entries.length ? d.entries : [d];
@@ -129,6 +220,7 @@ let active = 0;
 app.get("/api/download", (req, res) => {
   const { url, fid } = req.query;
   if (!url || !validUrl(url)) return res.status(400).send("Invalid URL");
+  if (guard(req, res, url)) return;
   const mp3 = fid === "mp3";
   if (!mp3 && !/^[\w\-+.]+$/.test(fid || "")) return res.status(400).send("Invalid format");
   if (active >= 2) return res.status(503).send("Server busy, 1 minute por abar try koro.");
@@ -160,6 +252,7 @@ app.get("/api/download", (req, res) => {
     res.setHeader("Content-Length", fs.statSync(fp).size);
     res.setHeader("Content-Type", mp3 ? "audio/mpeg" : "video/mp4");
     res.setHeader("Content-Disposition", `attachment; filename="mediavault-${id}.${mp3 ? "mp3" : "mp4"}"`);
+    logDl(req, url, req.query.ql || (mp3 ? "MP3" : fid));
     fs.createReadStream(fp).pipe(res);
   });
 });
