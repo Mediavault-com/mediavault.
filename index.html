@@ -8,38 +8,54 @@
 <script>document.documentElement.dataset.theme=localStorage.getItem("mv-theme")||"dark"</script>
 </head>
 <body>
-<header class="nav">
-  <div class="logo notranslate" translate="no">▶ Media<span>Vault</span></div>
-  <nav id="menu" class="menu">
-    <a href="#" data-p="youtube">YouTube</a>
-    <a href="#" data-p="instagram">Instagram</a>
-    <a href="#" data-p="twitter">Twitter/X</a>
-    <a href="#" data-p="tiktok">TikTok</a>
-    <a href="#" data-p="facebook">Facebook</a>
-  </nav>
-  <div class="tools">
-    <select id="lang" class="notranslate" translate="no" aria-label="Language"></select>
-    <button id="theme" type="button" aria-label="Dark / Light mode">☀️</button>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<header class="nav glass">
+  <a href="index.html" class="logo notranslate" translate="no">▶ Media<span>Vault</span></a>
+  <button id="burger" class="burger" type="button" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  <div id="navwrap" class="navwrap">
+    <nav id="menu" class="menu">
+      <a href="#" data-p="youtube"><i class="dot"></i>YouTube</a>
+      <a href="#" data-p="instagram"><i class="dot"></i>Instagram</a>
+      <a href="#" data-p="twitter"><i class="dot"></i>Twitter/X</a>
+      <a href="#" data-p="tiktok"><i class="dot"></i>TikTok</a>
+      <a href="#" data-p="facebook"><i class="dot"></i>Facebook</a>
+    </nav>
+    <div class="tools">
+      <select id="lang" class="notranslate" translate="no" aria-label="Language"></select>
+      <button id="theme" class="ghost" type="button" aria-label="Dark / Light mode">☀️</button>
+    </div>
   </div>
 </header>
 
 <main>
   <section class="hero">
-    <h1>Download videos, photos, stories & captions</h1>
+    <h1>Download <span class="grad">videos, photos, stories</span> & captions</h1>
     <p>YouTube · Instagram · Twitter/X · TikTok · Facebook — fast & smooth</p>
-    <div class="box">
+    <div class="box glass">
       <input id="url" type="url" placeholder="Paste media link here…" autocomplete="off">
-      <button id="paste" type="button">Paste</button>
-      <button id="go" type="button">Search</button>
+      <button id="paste" class="ghost" type="button">Paste</button>
+      <button id="go" class="btn-dl" type="button"><span class="fill"></span><span class="ico">🔍</span><span class="lbl">Search</span></button>
     </div>
     <div id="status" class="status"></div>
-    <div id="progress" class="progress hidden">
+    <div id="progress" class="progress glass hidden">
       <div id="ptext" class="ptext"></div>
       <div class="pbar"><i id="pfill"></i></div>
     </div>
   </section>
 
-  <section id="result" class="result hidden">
+  <section id="skeleton" class="result glass hidden" aria-hidden="true">
+    <div class="left"><div class="sk sk-thumb"></div><div class="sk sk-line w80"></div><div class="sk sk-line w50"></div></div>
+    <div class="right">
+      <div class="sk sk-line w30"></div>
+      <div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>
+      <div class="sk sk-line w30"></div>
+      <div class="sk-photos"><div class="sk sk-ph"></div><div class="sk sk-ph"></div><div class="sk sk-ph"></div></div>
+    </div>
+  </section>
+
+  <section id="result" class="result glass hidden">
     <div class="left">
       <img id="thumb" alt="preview" referrerpolicy="no-referrer">
       <h3 id="title"></h3>
@@ -52,19 +68,34 @@
       <div id="photos" class="photos"></div>
       <h4>📝 Caption</h4>
       <textarea id="caption" readonly></textarea>
-      <button id="copyBtn" type="button" class="sec">Copy Caption</button>
+      <button id="copyBtn" type="button" class="ghost">Copy Caption</button>
     </div>
   </section>
 
   <section class="features">
-    <div>⚡ Fast download</div><div>🎬 4K to 360p</div><div>🖼 Photo</div>
-    <div>📖 Story</div><div>📝 Caption copy</div><div>🛟 24h support</div>
+    <div class="glass">⚡ Fast download</div><div class="glass">🎬 4K to 360p</div><div class="glass">🖼 Photo</div>
+    <div class="glass">📖 Story</div><div class="glass">📝 Caption copy</div><div class="glass">🛟 24h support</div>
   </section>
 </main>
 
-<footer>
-  <p>© <span id="y"></span> MediaVault. Only download content you own or have permission to use.</p>
-  <p><a href="legal.html#dmca">DMCA</a> · <a href="legal.html#terms">Terms</a> · <a href="legal.html#privacy">Privacy</a> · <a href="legal.html#help">Support 24/7</a></p>
+<footer class="footer glass">
+  <div class="fgrid">
+    <div class="fbrand">
+      <div class="logo notranslate" translate="no">▶ Media<span>Vault</span></div>
+      <p>Fast, simple downloader for videos, photos, stories & captions.</p>
+    </div>
+    <div><h5>Platforms</h5>
+      <a href="#" data-p="youtube">YouTube</a><a href="#" data-p="instagram">Instagram</a>
+      <a href="#" data-p="twitter">Twitter/X</a><a href="#" data-p="tiktok">TikTok</a><a href="#" data-p="facebook">Facebook</a>
+    </div>
+    <div><h5>Legal</h5>
+      <a href="legal.html#terms">Terms of Service</a><a href="legal.html#privacy">Privacy Policy</a><a href="legal.html#dmca">DMCA</a>
+    </div>
+    <div><h5>Support</h5>
+      <a href="legal.html#help">Help Center</a><span>🛟 24/7 support</span><a href="mailto:support@yourdomain.com">support@yourdomain.com</a>
+    </div>
+  </div>
+  <div class="fbottom"><span>© <span id="y"></span> MediaVault</span><span>Only download content you own or have permission to use.</span></div>
 </footer>
 <div id="google_translate_element" style="display:none"></div>
 <script src="script.js"></script>
